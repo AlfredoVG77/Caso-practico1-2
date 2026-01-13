@@ -21,6 +21,7 @@ pipeline {
 				agent {label 'agent1'}
 				steps {
 					unstash name:'code'
+					bat whoami
 					bat '''
 						python -m flake8 --exit-zero --format=pylint app >flake8.out
 						'''
@@ -33,6 +34,7 @@ pipeline {
 				steps {
 					catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 						unstash name:'code'
+						bat whoami
 						bat '''
 							set FLASK_APP=app\\api.py
 							set FLASK_ENV=development
@@ -52,6 +54,7 @@ pipeline {
 			agent {label 'agent1'}
 				steps {
 					unstash name:'code'
+					bat whoami
 					bat '''
 						set PYTHONPATH=%WORKSPACE%
 						python -m coverage run --branch --source=app --omit=app\\__init__.py,app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
@@ -77,6 +80,7 @@ pipeline {
 				agent {label 'agent3'}
 				steps {
 					unstash name:'code'
+					bat whoami
 					bat '''
 						set FLASK_APP=app\\api.py
 						start python -m flask run --host=127.0.0.1 --port=5000
