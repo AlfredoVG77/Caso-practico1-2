@@ -10,7 +10,7 @@ pipeline {
  
                 // Obtener código del repo
 
-                git branch: 'feature_fix_coverage', url: 'https://github.com/AlfredoVG77/cp1-1-res.git'
+                git 'https://github.com/AlfredoVG77/Caso-practico1-2.git'
 
 			}
 		}
