@@ -20,8 +20,6 @@ pipeline {
 		 	stage('Flake8'){
 				agent {label 'agent1'}
 				steps {
-					bat 'echo Ejecutando en: & whoami'
-			        bat 'echo Workspace: %WORKSPACE%'
 					unstash name:'code'
 					bat '''
 						python -m flake8 --exit-zero --format=pylint app >flake8.out
@@ -33,8 +31,6 @@ pipeline {
 			stage('Service'){
 				agent {label 'agent2'}
 				steps {
-					bat 'echo Ejecutando en: & whoami'
-       				bat 'echo Workspace: %WORKSPACE%'
 					catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 						unstash name:'code'
 						bat '''
@@ -55,8 +51,6 @@ pipeline {
 			stage('Cobertura'){
 			agent {label 'agent1'}
 				steps {
-					bat 'echo Ejecutando en: & whoami'
-        			bat 'echo Workspace: %WORKSPACE%'
 					unstash name:'code'
 					bat '''
 						set PYTHONPATH=%WORKSPACE%
@@ -71,8 +65,6 @@ pipeline {
 			stage('Security'){
 				agent {label 'agent1'}
 				steps {
-					bat 'echo Ejecutando en: & whoami'
-       				bat 'echo Workspace: %WORKSPACE%'
 					unstash name:'code'
 					bat '''
 						python -m bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
@@ -84,8 +76,6 @@ pipeline {
 			stage('Performance'){
 				agent {label 'agent3'}
 				steps {
-					bat 'echo Ejecutando en: & whoami'
-        			bat 'echo Workspace: %WORKSPACE%'
 					unstash name:'code'
 					bat '''
 						set FLASK_APP=app\\api.py
