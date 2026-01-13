@@ -1,0 +1,79 @@
+pipeline {
+ 
+    agent any
+
+     stages {
+         
+         stage('Get Code') {
+
+            steps {
+ 
+                // Obtener código del repo
+
+                git branch: 'feature_fix_coverage', url: 'https://github.com/AlfredoVG77/cp1-1-res.git'
+
+			}
+		}
+
+       stage('Flake8'){
+		    steps {
+			    bat '''
+					python -m flake8 --exit-zero --format=pylint app >flake8.out
+				'''
+				recordIssues qualityGates: [[criticality: 'NOTE', integerThreshold: 8, threshold: 8.0, type: 'TOTAL'], [criticality: 'ERROR', integerThreshold: 10, threshold: 10.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [flake8(pattern: 'flake8.out')]
+				
+			}
+		}
+		 
+        stage('Service'){
+		    steps {
+			    bat '''
+				    set FLASK_APP=app\\api.py
+					start python -m flask run --host=127.0.0.1 --port=5000
+					ping -n 6 127.0.0.1
+					start java -jar C:\\Users\\alfre\\Unir\\wiremock\\wiremock-standalone-3.13.2.jar --port 9090 --root-dir test\\wiremock --verbose
+					ping -n 6 127.0.0.1
+					set PYTHONPATH=%WORKSPACE%
+					python -m pytest --junitxml=result-rest.xml test\\rest
+					'''
+					junit 'result-rest.xml'
+			}
+		}
+				stage('Cobertura'){
+		    steps {
+			    bat '''
+				    set PYTHONPATH=%WORKSPACE%
+					python -m coverage run --branch --source=app --omit=app\\__init__.py,app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
+					python -m coverage xml
+				'''
+			    junit 'result-unit.xml'
+				recordCoverage qualityGates: [[criticality: 'NOTE', integerThreshold: 95, metric: 'LINE', threshold: 95.0], [criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 85.0], [criticality: 'NOTE', integerThreshold: 90, metric: 'BRANCH', threshold: 90.0], [criticality: 'NOTE', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0]], tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
+			}
+			        post {
+            always {
+                junit 'result-unit.xml'
+            }
+        }
+		}
+		
+		stage('Security'){
+		    steps {
+			    bat '''
+					python -m bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
+				'''
+				recordIssues qualityGates: [[criticality: 'NOTE', integerThreshold: 2, threshold: 2.0, type: 'TOTAL'], [criticality: 'ERROR', integerThreshold: 4, threshold: 4.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [pyLint(pattern: 'bandit.out')]
+			}
+		}
+		stage('Performance'){
+		    steps {
+			    bat '''
+			        set FLASK_APP=app\\api.py
+					start python -m flask run --host=127.0.0.1 --port=5000
+					ping -n 6 127.0.0.1
+					C:\\Users\\alfre\\Herramientas\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\flask2.jmx -f -l flask.jtl
+				'''
+				perfReport sourceDataFiles: 'flask.jtl'
+			}
+		}
+    }
+}
