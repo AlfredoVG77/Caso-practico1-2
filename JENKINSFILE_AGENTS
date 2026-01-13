@@ -9,7 +9,7 @@ pipeline {
             steps {
  
                 // Obtener código del repo
-
+				bat 'whoami'
                 git 'https://github.com/AlfredoVG77/Caso-practico1-2.git'
 				stash name: 'code', includes: '**/*'
 			}
@@ -21,7 +21,7 @@ pipeline {
 				agent {label 'agent1'}
 				steps {
 					unstash name:'code'
-					bat whoami
+					bat 'whoami'
 					bat '''
 						python -m flake8 --exit-zero --format=pylint app >flake8.out
 						'''
@@ -34,7 +34,7 @@ pipeline {
 				steps {
 					catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 						unstash name:'code'
-						bat whoami
+						bat 'whoami'
 						bat '''
 							set FLASK_APP=app\\api.py
 							set FLASK_ENV=development
@@ -54,7 +54,7 @@ pipeline {
 			agent {label 'agent1'}
 				steps {
 					unstash name:'code'
-					bat whoami
+					bat 'whoami'
 					bat '''
 						set PYTHONPATH=%WORKSPACE%
 						python -m coverage run --branch --source=app --omit=app\\__init__.py,app\\api.py -m pytest --junitxml=result-unit.xml test\\unit
@@ -69,6 +69,7 @@ pipeline {
 				agent {label 'agent1'}
 				steps {
 					unstash name:'code'
+					bat 'whoami'
 					bat '''
 						python -m bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
 					'''
@@ -80,7 +81,7 @@ pipeline {
 				agent {label 'agent3'}
 				steps {
 					unstash name:'code'
-					bat whoami
+					bat 'whoami'
 					bat '''
 						set FLASK_APP=app\\api.py
 						start python -m flask run --host=127.0.0.1 --port=5000
@@ -96,8 +97,7 @@ pipeline {
 		stage('Results') {
 			steps {
 				bat 'echo Ejecutando en: & whoami'
-        		bat 'echo Workspace: %WORKSPACE%'
-				unstash 'flake8-res'
+        		unstash 'flake8-res'
 				unstash 'bandit-res'
 				unstash 'unit-res'
 				unstash 'cover-res'
