@@ -1,2 +1,2 @@
-C:\Users\alfre\.jenkins\workspace\cp1.2\test\rest\api_test.py:20: [B310] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
-C:\Users\alfre\.jenkins\workspace\cp1.2\test\rest\api_test.py:30: [B310] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+C:\Users\alfre\.jenkins\workspace\Test1.2\test\rest\api_test.py:20: [B310] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+C:\Users\alfre\.jenkins\workspace\Test1.2\test\rest\api_test.py:30: [B310] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
