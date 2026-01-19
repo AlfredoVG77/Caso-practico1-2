@@ -7,11 +7,13 @@ pipeline {
         stage('Get Code') {
 
             steps {
+				deleteDir()
  
                 // Obtener código del repo
 				bat 'whoami'
 				bat 'hostname'
 				bat 'echo Workspace: %WORKSPACE%'
+
                 git 'https://github.com/AlfredoVG77/Caso-practico1-2.git'
 				stash name: 'code', includes: '**/*'
 			}
@@ -22,6 +24,7 @@ pipeline {
 		 	stage('Flake8'){
 				agent {label 'agent1'}
 				steps {
+					catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 					unstash name:'code'
 					bat 'whoami'
 					bat 'hostname'
@@ -30,6 +33,7 @@ pipeline {
 						python -m flake8 --exit-zero --format=pylint app >flake8.out
 						'''
 					recordIssues qualityGates: [[criticality: 'NOTE', integerThreshold: 8, threshold: 8.0, type: 'TOTAL'], [criticality: 'ERROR', integerThreshold: 10, threshold: 10.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [flake8(pattern: 'flake8.out')]
+					}
 					stash name: 'flake8-res', includes: 'flake8.out'
 						}
 					}		 
@@ -59,6 +63,7 @@ pipeline {
 			stage('Cobertura'){
 			agent {label 'agent1'}
 				steps {
+					catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 					unstash name:'code'
 					bat 'whoami'
 					bat 'hostname'
@@ -69,6 +74,7 @@ pipeline {
 						python -m coverage xml
 					'''
 					recordCoverage qualityGates: [[criticality: 'NOTE', integerThreshold: 95, metric: 'LINE', threshold: 95.0], [criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 85.0], [criticality: 'NOTE', integerThreshold: 90, metric: 'BRANCH', threshold: 90.0], [criticality: 'NOTE', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0]], tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
+					}
 					stash name:'unit-res', includes:'result-unit.xml'
 					stash name:'cover-res', includes:'coverage.xml'
 					}
@@ -76,6 +82,7 @@ pipeline {
 			stage('Security'){
 				agent {label 'agent1'}
 				steps {
+					catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 					unstash name:'code'
 					bat 'whoami'
 					bat 'hostname'
@@ -84,12 +91,14 @@ pipeline {
 						python -m bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
 					'''
 					recordIssues qualityGates: [[criticality: 'NOTE', integerThreshold: 2, threshold: 2.0, type: 'TOTAL'], [criticality: 'ERROR', integerThreshold: 4, threshold: 4.0, type: 'TOTAL']], sourceCodeRetention: 'LAST_BUILD', tools: [pyLint(pattern: 'bandit.out')]
+					}
 					stash name:'bandit-res', includes:'bandit.out'
 					}
 				}
 			stage('Performance'){
 				agent {label 'agent3'}
 				steps {
+					catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
 					unstash name:'code'
 					bat 'whoami'
 					bat 'hostname'
@@ -101,6 +110,7 @@ pipeline {
 						C:\\Users\\alfre\\Herramientas\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter -n -t test\\jmeter\\flask2.jmx -f -l flask.jtl
 					'''
 					perfReport sourceDataFiles: 'flask.jtl'
+					}
 					stash name:'jmeter-jtl', includes:'flask.jtl'
 					}
 				}
@@ -108,10 +118,10 @@ pipeline {
 		}
 		stage('Results') {
 			steps {
-				bat 'echo Ejecutando en: & whoami'
+				bat 'whoami'
 				bat 'hostname'
 				bat 'echo Workspace: %WORKSPACE%'
-        		unstash 'flake8-res'
+				unstash 'flake8-res'
 				unstash 'bandit-res'
 				unstash 'unit-res'
 				unstash 'cover-res'
